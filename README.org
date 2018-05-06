@@ -1,0 +1,43 @@
+* jvozip
+This is a data compressor from scratch and it's based on
+https://www.destroyallsoftware.com/screencasts/catalog/data-compressor-from-scratch. It's
+meant to demonstrate data compression basics, not to compete with well
+established compression algorithms.
+** Usage
+#+BEGIN_EXAMPLE
+$ ./jvozip.py -h
+usage: jvozip.py [-h] [--graph GRAPH] {compress,decompress}
+
+positional arguments:
+  {compress,decompress}
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --graph GRAPH         Generate a visual representation of the encoding.
+#+END_EXAMPLE
+** Introduction
+This achieves compression by building a Huffman tree per byte for some
+given input. This is converted into a =(symbol, coding)= dictionary
+which is included in the beginning of the file. Data is written in a
+non-byte aligned manner using the =Packer= class.
+** Huffman tree
+A visual representation of the Huffman tree can be written to disk
+during the compression process with the =--graph= option. E.g. the
+Huffman Tree for this readme looks like this:
+[[https://raw.githubusercontent.com/jorenvo/jvozip/master/readme_tree.svg?sanitize=true]]
+** Results
+Because the compression algorithm only considers single bytes, the
+compression ratio is around 60% for most input data.
+
+#+BEGIN_EXAMPLE
+$ wc -c /usr/share/dict/american-english
+1185564 /usr/share/dict/american-english
+$ cat /usr/share/dict/american-english | ./jvozip.py compress | wc -c
+661331
+$ python -c 'print(661331 / 1185564)'
+0.5578197381162046
+$ sha1sum /usr/share/dict/american-english
+1b15891e2fcc7c6d4888e5a0ee1a84526a00a8e7  /usr/share/dict/american-english
+$ sha1sum <(cat /usr/share/dict/american-english | ./jvozip.py compress | ./jvozip.py decompress)
+1b15891e2fcc7c6d4888e5a0ee1a84526a00a8e7  /dev/fd/63
+#+END_EXAMPLE
